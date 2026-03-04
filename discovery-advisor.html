@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovery Advisor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,700;1,300&display=swap');
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #c8f135;
+    --text: #e8e8e8;
+    --muted: #666;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+  }
+
+  header { text-align: center; margin-bottom: 56px; }
+
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  header h1 span { color: var(--accent); font-style: italic; }
+
+  header p {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .progress { display: flex; gap: 6px; margin-bottom: 32px; }
+
+  .progress-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .progress-dot.active { background: var(--accent); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 36px;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 16px;
+  }
+
+  .step-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .question {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .question-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .options.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .option-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .option-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .option-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e0e;
+    font-weight: 500;
+  }
+
+  .option-icon { display: block; font-size: 1.1rem; margin-bottom: 6px; }
+
+  .next-btn {
+    margin-top: 24px;
+    background: var(--accent);
+    border: none;
+    border-radius: 2px;
+    color: #0e0e0e;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+
+  .next-btn:hover { opacity: 0.85; }
+  .next-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Result */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 36px;
+    width: 100%;
+    max-width: 640px;
+    display: none;
+  }
+
+  .result-card.visible { display: block; }
+
+  .result-artefact {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .result-author {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  .result-why {
+    color: #aaa;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .result-ref {
+    font-size: 0.72rem;
+    color: var(--muted);
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .result-also {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .result-also-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .also-item {
+    font-size: 0.78rem;
+    color: #999;
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+
+  .also-item span { color: var(--accent); }
+
+  .result-steps { border-top: 1px solid var(--border); padding-top: 20px; }
+
+  .result-steps-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    color: #bbb;
+    line-height: 1.5;
+  }
+
+  .step-num { color: var(--accent); min-width: 20px; }
+
+  .reset-btn {
+    margin-top: 28px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .hidden { display: none; }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Discovery<span>Advisor</span></h1>
+  <p>Quel artefact discovery utiliser maintenant ?</p>
+</header>
+
+<div class="progress">
+  <div class="progress-dot active" id="dot0"></div>
+  <div class="progress-dot" id="dot1"></div>
+  <div class="progress-dot" id="dot2"></div>
+  <div class="progress-dot" id="dot3"></div>
+  <div class="progress-dot" id="dot4"></div>
+</div>
+
+<!-- Step 0: Objectif -->
+<div class="card fade-in" id="step0">
+  <div class="step-label">Étape 1 / 4</div>
+  <div class="question">Quel est ton objectif principal en ce moment ?</div>
+  <div class="question-hint">Chaque artefact a une fonction précise. Choisir le mauvais outil pour le bon moment reste un mauvais choix.</div>
+  <div class="options">
+    <button class="option-btn" onclick="select(this, 'goal', 'understand_problem')">
+      <span class="option-icon">🔍</span>
+      Comprendre le problème<br><span style="color:var(--muted);font-size:0.75rem">Explorer les besoins, douleurs et contexte utilisateur</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'goal', 'explore_solutions')">
+      <span class="option-icon">💡</span>
+      Explorer des solutions<br><span style="color:var(--muted);font-size:0.75rem">Générer et prioriser des pistes de solutions</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'goal', 'align_team')">
+      <span class="option-icon">🤝</span>
+      Aligner l'équipe ou les stakeholders<br><span style="color:var(--muted);font-size:0.75rem">Créer une vision partagée du problème ou du produit</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'goal', 'plan_delivery')">
+      <span class="option-icon">🗺️</span>
+      Planifier le delivery d'une solution connue<br><span style="color:var(--muted);font-size:0.75rem">Découper et séquencer ce qu'on va construire</span>
+    </button>
+  </div>
+  <button class="next-btn" id="btn0" onclick="goTo(1)" disabled>Continuer →</button>
+</div>
+
+<!-- Step 1: Clarté -->
+<div class="card hidden" id="step1">
+  <div class="step-label">Étape 2 / 4</div>
+  <div class="question">Où en es-tu dans ta compréhension du problème ?</div>
+  <div class="question-hint">Teresa Torres : avant d'explorer des solutions, l'espace des opportunités doit être suffisamment cartographié.</div>
+  <div class="options">
+    <button class="option-btn" onclick="select(this, 'clarity', 'none')">
+      <span class="option-icon">🌫️</span>
+      Je pars de zéro<br><span style="color:var(--muted);font-size:0.75rem">Pas encore de clarté sur le problème ni les utilisateurs</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'clarity', 'partial')">
+      <span class="option-icon">🔭</span>
+      J'ai des hypothèses<br><span style="color:var(--muted);font-size:0.75rem">Je crois comprendre le problème mais c'est à valider</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'clarity', 'good')">
+      <span class="option-icon">✅</span>
+      Le problème est bien compris<br><span style="color:var(--muted);font-size:0.75rem">Validé par des signaux utilisateurs clairs</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'clarity', 'solution_known')">
+      <span class="option-icon">🎯</span>
+      Problème ET solution sont clairs<br><span style="color:var(--muted);font-size:0.75rem">Je sais ce qu'on va construire, il faut planifier</span>
+    </button>
+  </div>
+  <button class="next-btn" id="btn1" onclick="goTo(2)" disabled>Continuer →</button>
+</div>
+
+<!-- Step 2: Audience -->
+<div class="card hidden" id="step2">
+  <div class="step-label">Étape 3 / 4</div>
+  <div class="question">Pour qui travailles-tu cet artefact ?</div>
+  <div class="question-hint">Un artefact solo sert à structurer ta pensée. Un artefact collectif sert à aligner. Les deux ont des formats très différents.</div>
+  <div class="options grid">
+    <button class="option-btn" onclick="select(this, 'audience', 'solo')">
+      <span class="option-icon">🧠</span>
+      Pour moi seul<br><span style="color:var(--muted);font-size:0.75rem">Structurer ma réflexion</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'audience', 'team')">
+      <span class="option-icon">👥</span>
+      Équipe produit<br><span style="color:var(--muted);font-size:0.75rem">Dev, design, PM</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'audience', 'stakeholders')">
+      <span class="option-icon">🏢</span>
+      Stakeholders business<br><span style="color:var(--muted);font-size:0.75rem">Direction, métier, clients</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'audience', 'all')">
+      <span class="option-icon">🌐</span>
+      Tout le monde<br><span style="color:var(--muted);font-size:0.75rem">Alignement global</span>
+    </button>
+  </div>
+  <button class="next-btn" id="btn2" onclick="goTo(3)" disabled>Continuer →</button>
+</div>
+
+<!-- Step 3: Horizon -->
+<div class="card hidden" id="step3">
+  <div class="step-label">Étape 4 / 4</div>
+  <div class="question">Sur quel horizon travailles-tu ?</div>
+  <div class="question-hint">L'horizon détermine le niveau d'abstraction de l'artefact — du ticket au vision produit.</div>
+  <div class="options">
+    <button class="option-btn" onclick="select(this, 'horizon', 'feature')">
+      <span class="option-icon">⚡</span>
+      Court terme — une feature ou un sprint<br><span style="color:var(--muted);font-size:0.75rem">Quelques semaines</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'horizon', 'product')">
+      <span class="option-icon">📦</span>
+      Moyen terme — un produit ou une version<br><span style="color:var(--muted);font-size:0.75rem">Quelques mois</span>
+    </button>
+    <button class="option-btn" onclick="select(this, 'horizon', 'vision')">
+      <span class="option-icon">🔭</span>
+      Long terme — vision ou stratégie<br><span style="color:var(--muted);font-size:0.75rem">6 mois à plusieurs années</span>
+    </button>
+  </div>
+  <button class="next-btn" id="btn3" onclick="showResult()" disabled>Voir ma recommandation →</button>
+</div>
+
+<!-- Result -->
+<div class="result-card" id="result">
+  <div class="step-label">Artefact recommandé</div>
+  <div class="result-artefact" id="result-artefact"></div>
+  <div class="result-author" id="result-author"></div>
+  <div class="result-why" id="result-why"></div>
+  <div class="result-ref" id="result-ref"></div>
+  <div class="result-also" id="result-also" style="display:none">
+    <div class="result-also-label">À combiner avec</div>
+    <div id="result-also-list"></div>
+  </div>
+  <div class="result-steps">
+    <div class="result-steps-label">Comment démarrer</div>
+    <div id="result-steps-list"></div>
+  </div>
+  <button class="reset-btn" onclick="reset()">← Recommencer</button>
+</div>
+
+<script>
+  const answers = {};
+
+  const artefacts = {
+    ost: {
+      name: "Opportunity Solution Tree",
+      author: "Teresa Torres — Continuous Discovery Habits",
+      why: "L'OST est l'artefact central de la discovery. Il structure la relation entre ton outcome business, les opportunités utilisateurs, les solutions possibles et les expériences à mener. Il t'évite de sauter à la solution avant d'avoir cartographié l'espace du problème.",
+      ref: "Torres : \"L'OST te force à rester connecté à l'outcome business tout en explorant l'espace des opportunités de façon systématique. C'est une carte vivante, pas un livrable.\"",
+      steps: [
+        "Pose ton outcome business en haut de l'arbre",
+        "Liste toutes les opportunités (besoins, douleurs, désirs) sans juger",
+        "Regroupe et priorise les opportunités par impact",
+        "Pour chaque opportunité prioritaire, génère plusieurs solutions",
+        "Identifie les hypothèses à tester en premier"
+      ],
+      also: ["Story Mapping (si tu passes en delivery)", "Assumption Mapping (pour tester tes hypothèses)"]
+    },
+    story_map: {
+      name: "Story Mapping",
+      author: "Jeff Patton — User Story Mapping",
+      why: "Le Story Map permet de visualiser le parcours utilisateur complet et de séquencer les features à développer. C'est l'outil idéal quand le problème est compris et qu'on doit planifier ce qu'on va construire — et dans quel ordre.",
+      ref: "Patton : \"Une story map replace chaque user story dans son contexte d'usage. Elle montre le grand tableau que les backlogs à plat font disparaître.\"",
+      steps: [
+        "Identifie les grandes activités utilisateur (axe horizontal)",
+        "Décompose chaque activité en tâches détaillées",
+        "Priorise verticalement : ce qui est essentiel vs ce qui peut attendre",
+        "Trace une ligne horizontale pour définir ton MVP",
+        "Aligne l'équipe sur la slice minimale à livrer en premier"
+      ],
+      also: ["OST (si des zones d'incertitude remontent)", "Impact Mapping (pour valider les priorités business)"]
+    },
+    impact_map: {
+      name: "Impact Mapping",
+      author: "Gojko Adzic — Impact Mapping",
+      why: "L'Impact Map aligne les features sur les objectifs business en posant quatre questions : Pourquoi ? (objectif) Qui ? (acteurs) Comment ? (impacts) Quoi ? (livrables). C'est l'artefact parfait pour aligner stakeholders business et équipe produit sur les priorités.",
+      ref: "Adzic : \"L'Impact Map évite de builder des features déconnectées des objectifs. Elle force la conversation sur l'impact attendu avant de parler de solution.\"",
+      steps: [
+        "Définis l'objectif business mesurable au centre",
+        "Identifie les acteurs qui peuvent t'aider à l'atteindre",
+        "Pour chaque acteur, décris l'impact comportemental attendu",
+        "Liste les livrables qui pourraient créer cet impact",
+        "Priorise les branches avec le plus fort levier sur l'objectif"
+      ],
+      also: ["OST (pour approfondir les opportunités)", "Story Mapping (pour planifier le delivery)"]
+    },
+    hmw: {
+      name: "How Might We + Problem Statement",
+      author: "IDEO — Design Thinking",
+      why: "Le HMW reformule un problème comme une invitation à l'exploration. C'est l'artefact de départ quand on part de zéro — il ouvre l'espace des possibles sans contraindre vers une solution. Un bon Problem Statement cadre ce qu'on cherche à résoudre sans dicter comment.",
+      ref: "IDEO : \"La qualité de ta solution dépend directement de la qualité de ta question. Un HMW bien formulé génère plus d'idées pertinentes qu'un brief technique.\"",
+      steps: [
+        "Collecte les observations brutes sur le problème (interviews, data)",
+        "Reformule chaque problème en 'Comment pourrions-nous... ?'",
+        "Génère plusieurs formulations du même problème (plus large, plus étroit)",
+        "Choisis la formulation qui ouvre sans contraindre",
+        "Utilise-le comme point de départ pour l'OST ou l'Impact Map"
+      ],
+      also: ["OST (étape suivante naturelle)", "Assumption Mapping (pour tester tes hypothèses de problème)"]
+    },
+    jtbd: {
+      name: "Jobs To Be Done Map",
+      author: "Clayton Christensen / Tony Ulwick — JTBD Theory",
+      why: "Le JTBD identifie ce que l'utilisateur cherche vraiment à accomplir — indépendamment de la solution. Il révèle les motivations profondes là où les user stories restent en surface. C'est l'artefact idéal pour comprendre pourquoi les gens utilisent (ou n'utilisent pas) ton produit.",
+      ref: "Christensen : \"Les clients n'achètent pas des produits, ils les 'engagent' pour accomplir un job. Comprendre le job, c'est comprendre la vraie concurrence.\"",
+      steps: [
+        "Identifie le job principal : 'Quand je... je veux... pour que...'",
+        "Cartographie les jobs fonctionnels, émotionnels et sociaux",
+        "Identifie les frictions actuelles (pain points) dans l'accomplissement du job",
+        "Cherche les solutions de contournement existantes — elles révèlent les vrais besoins",
+        "Priorise les jobs sous-servis avec le plus fort potentiel"
+      ],
+      also: ["HMW (pour reformuler en opportunités)", "OST (pour explorer les solutions)"]
+    },
+    assumption_map: {
+      name: "Assumption Mapping",
+      author: "David Bland & Alex Osterwalder — Testing Business Ideas",
+      why: "L'Assumption Map identifie et priorise les hypothèses critiques de ton idée selon deux dimensions : importance pour le succès et niveau de certitude actuel. Il te dit quoi tester en premier — avant d'investir en développement.",
+      ref: "Bland & Osterwalder : \"Toute idée produit repose sur des hypothèses. Les équipes qui échouent sont celles qui buildent sans avoir identifié et testé leurs hypothèses les plus risquées.\"",
+      steps: [
+        "Liste toutes les hypothèses de ton idée (désirabilité, faisabilité, viabilité)",
+        "Place chaque hypothèse sur la matrice : importance × certitude",
+        "Identifie le quadrant 'important + incertain' — ce sont tes priorités de test",
+        "Définis une expérience pour tester chaque hypothèse critique",
+        "Commence par l'hypothèse la plus risquée, pas la plus facile"
+      ],
+      also: ["ProtoAdvisor (pour choisir le bon prototype de test)", "OST (pour intégrer les résultats)"]
+    }
+  };
+
+  function getRecommendation() {
+    const { goal, clarity, audience, horizon } = answers;
+
+    // Planifier le delivery → Story Map
+    if (goal === 'plan_delivery' || clarity === 'solution_known') {
+      return { key: 'story_map' };
+    }
+
+    // Aligner stakeholders business → Impact Map
+    if (goal === 'align_team' && (audience === 'stakeholders' || audience === 'all')) {
+      return { key: 'impact_map' };
+    }
+
+    // Partir de zéro → HMW + Problem Statement
+    if (clarity === 'none') {
+      return { key: 'hmw' };
+    }
+
+    // Comprendre le problème en profondeur → JTBD
+    if (goal === 'understand_problem' && (clarity === 'partial' || clarity === 'none')) {
+      return { key: 'jtbd' };
+    }
+
+    // Explorer des solutions, problème bien compris → OST
+    if (goal === 'explore_solutions' && clarity === 'good') {
+      return { key: 'ost' };
+    }
+
+    // Hypothèses à valider → Assumption Mapping
+    if (clarity === 'partial' && goal === 'explore_solutions') {
+      return { key: 'assumption_map' };
+    }
+
+    // Aligner l'équipe produit → OST
+    if (goal === 'align_team' && audience === 'team') {
+      return { key: 'ost' };
+    }
+
+    // Vision long terme → Impact Map
+    if (horizon === 'vision') {
+      return { key: 'impact_map' };
+    }
+
+    // Moyen terme, problème compris → OST
+    if (horizon === 'product' && clarity === 'good') {
+      return { key: 'ost' };
+    }
+
+    // Fallback → OST
+    return { key: 'ost' };
+  }
+
+  function select(btn, type, value) {
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    answers[type] = value;
+    const map = { goal: 'btn0', signals: 'btn1', clarity: 'btn1', audience: 'btn2', horizon: 'btn3' };
+    if (map[type]) document.getElementById(map[type]).disabled = false;
+  }
+
+  function goTo(step) {
+    document.getElementById('step' + (step - 1)).classList.add('hidden');
+    const next = document.getElementById('step' + step);
+    next.classList.remove('hidden');
+    next.classList.add('fade-in');
+    document.getElementById('dot' + step).classList.add('active');
+  }
+
+  function showResult() {
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('dot4').classList.add('active');
+
+    const { key } = getRecommendation();
+    const rec = artefacts[key];
+
+    document.getElementById('result-artefact').textContent = rec.name;
+    document.getElementById('result-author').textContent = rec.author;
+    document.getElementById('result-why').textContent = rec.why;
+    document.getElementById('result-ref').textContent = rec.ref;
+
+    if (rec.also && rec.also.length > 0) {
+      document.getElementById('result-also').style.display = 'block';
+      document.getElementById('result-also-list').innerHTML = rec.also.map(a => `
+        <div class="also-item">→ <span>${a.split('(')[0].trim()}</span>${a.includes('(') ? ' (' + a.split('(')[1] : ''}</div>
+      `).join('');
+    }
+
+    document.getElementById('result-steps-list').innerHTML = rec.steps.map((s, i) => `
+      <div class="step-item">
+        <span class="step-num">${String(i + 1).padStart(2, '0')}.</span>
+        <span>${s}</span>
+      </div>
+    `).join('');
+
+    const resultCard = document.getElementById('result');
+    resultCard.classList.add('visible', 'fade-in');
+  }
+
+  function reset() {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    ['btn0','btn1','btn2','btn3'].forEach(id => document.getElementById(id).disabled = true);
+    ['step1','step2','step3','result'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add('hidden');
+      el.classList.remove('visible');
+    });
+    document.getElementById('step0').classList.remove('hidden');
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.progress-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+    document.getElementById('result-also').style.display = 'none';
+  }
+</script>
+</body>
+</html>
