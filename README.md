@@ -4,6 +4,10 @@
 
 ---
 
+![Version](https://img.shields.io/badge/version-1.0-c8602a) ![Licence](https://img.shields.io/badge/licence-MIT-2a7c6f) ![No deps](https://img.shields.io/badge/dépendances-aucune-gold)
+
+---
+
 ## Le problème
 
 Un OST quand il faut un Story Map. Un Story Map quand il faut un JTBD. La plupart des PMs connaissent les artefacts discovery — mais choisissent le mauvais au mauvais moment.
@@ -56,3 +60,11 @@ Troisième outil d'une série pensée pour aider les équipes produit à mieux d
 - [ProtoAdvisor](https://github.com/MattJCand/ProtoAdvisor4PM) — quel prototype pour valider ton hypothèse ?
 - [IdeaClassifier](https://github.com/MattJCand/IdeaClassifier4PM) — ton idée mérite-t-elle une discovery ?
 - **DiscoveryAdvisor** — quel artefact discovery utiliser maintenant ?
+
+---
+
+## 📄 Licence
+
+MIT
+
+
